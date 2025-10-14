@@ -14,8 +14,8 @@ class Movie(models.Model):
         return str(self.id) + ' - ' + self.name
     
     def get_average_rating(self):
-        avg = self.rating.aggregate(avg_rating=Avg('rating'))
-        return round(avg, 1) 
+        avg = self.ratings.aggregate(avg_rating=Avg('rating'))['avg_rating']
+        return round(avg or 0, 1) 
 
     def get_rating_count(self):
         return self.ratings.count()
@@ -25,9 +25,9 @@ class Movie(models.Model):
 
 class Rating(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
+    movie = models.ForeignKey(Movie, related_name="ratings", on_delete=models.CASCADE)
     rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
-    created_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ('user', 'movie')

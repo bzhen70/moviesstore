@@ -87,5 +87,5 @@ def rate_movie(request, movie_id):
         "average_rating": movie.get_average_rating(),
         "rating_count": movie.get_rating_count(),
         "user_rating": rating.rating,
-        "date": created
+        "created": created
     })

@@ -1,6 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Movie, Review
+from .models import Movie, Review, Rating
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+
 def index(request):
     search_term = request.GET.get('search')
     if search_term:
@@ -60,3 +63,29 @@ def delete_review(request, id, review_id):
         user=request.user)
     review.delete()
     return redirect('movies.show', id=id)
+
+@require_POST
+@login_required
+def rate_movie(request, movie_id):
+    movie = get_object_or_404(Movie, id=movie_id)
+
+    try:
+        rating_value = int(request.POST.get("rating"))
+        if rating_value not in range(1, 6):
+            return JsonResponse({"error": "Rating must be 1-5"}, status=400)
+    except:
+        return JsonResponse({"error": "Rating is invalid"}, status=400)
+    
+    rating, created = Rating.objects.update_or_create(
+        user=request.user,
+        movie=movie,
+        defaults={"rating": rating_value}
+    )
+
+    return JsonResponse({
+        "movie": movie.name,
+        "average_rating": movie.get_average_rating(),
+        "rating_count": movie.get_rating_count(),
+        "user_rating": rating.rating,
+        "date": created
+    })

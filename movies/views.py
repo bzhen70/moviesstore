@@ -19,12 +19,19 @@ def index(request):
 def show(request, id):
     movie = Movie.objects.get(id=id)
     reviews = Review.objects.filter(movie=movie)
-    template_data = {}
-    template_data['title'] = movie.name
-    template_data['movie'] = movie
-    template_data['reviews'] = reviews
-    return render(request, 'movies/show.html',
-                  {'template_data': template_data})
+    user_rating = None
+    if request.user.is_authenticated:
+        try:
+            user_rating = Rating.objects.get(user=request.user, movie=movie).rating
+        except Rating.DoesNotExist:
+            user_rating = None
+    template_data = {
+        'title': movie.name,
+        'movie': movie,
+        'reviews': reviews,
+        'user_rating': user_rating,
+    }
+    return render(request, 'movies/show.html', {'template_data': template_data})
 
 @login_required
 def create_review(request, id):
@@ -66,8 +73,8 @@ def delete_review(request, id, review_id):
 
 @require_POST
 @login_required
-def rate_movie(request, movie_id):
-    movie = get_object_or_404(Movie, id=movie_id)
+def rate_movie(request, id):
+    movie = get_object_or_404(Movie, id=id)
 
     try:
         rating_value = int(request.POST.get("rating"))
@@ -83,6 +90,7 @@ def rate_movie(request, movie_id):
     )
 
     return JsonResponse({
+        "movie_id": movie.id,
         "movie": movie.name,
         "average_rating": movie.get_average_rating(),
         "rating_count": movie.get_rating_count(),

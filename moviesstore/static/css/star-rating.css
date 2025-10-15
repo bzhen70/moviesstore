@@ -1,0 +1,14 @@
+/* star rating styles */
+.star-rating-display, .star-rating-input { display:inline-flex; align-items:center; gap:.5rem; }
+.stars-container, .stars-input-container { display:flex; gap:.25rem; }
+.star-rating-sm i { font-size:.9rem; } .star-rating-md i { font-size:1.1rem; } .star-rating-lg i { font-size:1.5rem; }
+.star-filled, .star-half, .star-btn.active i { color:#ffc107; }
+.star-empty, .star-btn i { color:#e4e5e9; }
+.rating-value { font-weight:600; color:#495057; }
+.rating-count { font-size:.9rem; color:#6c757d; }
+.star-btn { background:none; border:0; padding:.25rem; cursor:pointer; border-radius:.25rem; }
+.star-btn:hover i { color:#ffed4a; transform:scale(1.08); transition:all .15s; }
+@keyframes starPulse { 0%{transform:scale(1)} 50%{transform:scale(1.18)} 100%{transform:scale(1)} }
+.star-selected i { animation:starPulse .28s; color:#ffc107; }
+.rating-actions { display:flex; gap:.5rem; margin-left:.75rem; align-items:center; }
+@media (max-width:576px){ .star-rating-display, .star-rating-input { flex-direction:column; align-items:flex-start; gap:.75rem; } .rating-actions{ margin-left:0; flex-wrap:wrap; } }

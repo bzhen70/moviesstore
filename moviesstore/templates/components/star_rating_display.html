@@ -1,0 +1,17 @@
+<div class="star-rating-display star-rating-{{ size|default:'md' }}" data-movie-id="{{ movie_id|default:'' }}">
+  <div class="stars-container">
+    {% with r=rating|default:0 %}
+      {% for _ in "12345"|make_list %}
+        {% if forloop.counter <= r %}
+          <i class="fas fa-star star-filled"></i>
+        {% elif forloop.counter|add:"-1" < r %}
+          <i class="fas fa-star-half-alt star-half"></i>
+        {% else %}
+          <i class="far fa-star star-empty"></i>
+        {% endif %}
+      {% endfor %}
+    {% endwith %}
+  </div>
+  {% if rating %}<span class="rating-value">{{ rating }}</span>{% endif %}
+  {% if count %}<span class="rating-count">({{ count }} rating{{ count|pluralize }})</span>{% endif %}
+</div>

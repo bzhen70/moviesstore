@@ -38,6 +38,9 @@
             class="btn bg-dark text-white">
             {{ movie.name }}
             </a>
+            <div class="mt-2">
+              {% include 'components/star_rating_display.html' with rating=movie.get_average_rating count=movie.get_rating_count size='sm' movie_id=movie.id %}
+            </div>
           </div>
         </div>
       </div>

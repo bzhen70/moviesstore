@@ -1,0 +1,17 @@
+<div class="star-rating-input star-rating-{{ size|default:'md' }}" data-movie-id="{{ movie_id }}">
+  <form class="rating-form" action="{% url 'movies.rate_movie' id=movie_id %}" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="rating" id="rating-value-{{ movie_id }}" value="{{ current_rating|default:'' }}">
+    <div class="stars-input-container">
+      {% for i in "12345"|make_list %}
+        <button type="button" class="star-btn {% if current_rating and forloop.counter <= current_rating %}active{% endif %}" data-rating="{{ forloop.counter }}" aria-label="Rate {{ forloop.counter }} stars">
+          <i class="{% if current_rating and forloop.counter <= current_rating %}fas{% else %}far{% endif %} fa-star"></i>
+        </button>
+      {% endfor %}
+    </div>
+    <div class="rating-actions">
+      <button type="submit" class="btn btn-primary btn-sm submit-rating {% if not current_rating %}d-none{% endif %}">Submit Rating</button>
+    </div>
+  </form>
+  <div class="rating-feedback" id="rating-feedback-{{ movie_id }}" role="alert" aria-live="polite"></div>
+</div>

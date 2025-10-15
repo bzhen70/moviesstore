@@ -1,9 +1,13 @@
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404, redirect
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from movies.models import Movie
 from .utils import calculate_cart_total
 from .models import Order, Item
 from django.contrib.auth.decorators import login_required
+import json
 
 def index(request):
     cart_total = 0
@@ -53,4 +57,30 @@ def purchase(request):
     template_data = {}
     template_data['title'] = 'Purchase confirmation'
     template_data['order_id'] = order.id
+    template_data['order'] = order  # Pass order object for location capture
     return render(request, 'cart/purchase.html', {'template_data': template_data})
+
+@csrf_exempt
+@require_POST
+@login_required
+def update_order_location(request):
+    try:
+        data = json.loads(request.body)
+        order_id = data.get('order_id')
+        latitude = data.get('latitude')
+        longitude = data.get('longitude')
+        city = data.get('city', '')
+        state = data.get('state', '')
+        country = data.get('country', '')
+        
+        order = get_object_or_404(Order, id=order_id, user=request.user)
+        order.latitude = latitude
+        order.longitude = longitude
+        order.city = city
+        order.state = state
+        order.country = country
+        order.save()
+        
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})

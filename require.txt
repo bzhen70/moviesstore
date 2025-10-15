@@ -1,0 +1,5 @@
+Add location field to existing Order model (or create OrderLocation model)
+Modify order creation process to capture user location (city, state, country)
+Create MovieLocationTrend model to store aggregated data: movie, location, purchase_count, date
+Create management command to aggregate order data by location
+Add location capture to checkout process

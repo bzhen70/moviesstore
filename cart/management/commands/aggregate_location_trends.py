@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from datetime import date, timedelta
+from django.utils import timezone
 from cart.models import Order, Item, MovieLocationTrend
 import json
 
@@ -19,7 +20,7 @@ class Command(BaseCommand):
         export_json = options['export_json']
         export_file = options['export_file']
         
-        end_date = date.today()
+        end_date = timezone.now().date()
         start_date = end_date - timedelta(days=days_back)
         
         print(f'Aggregating orders from {start_date} to {end_date}')
@@ -42,6 +43,8 @@ class Command(BaseCommand):
         trends_created = 0
         trends_updated = 0
         
+        location_movie_data = {}
+        
         for order in orders_with_location:
             order_items = Item.objects.filter(order=order)
             
@@ -51,32 +54,59 @@ class Command(BaseCommand):
                 state = order.state or 'Unknown'
                 country = order.country or 'Unknown'
                 
-                trend, created = MovieLocationTrend.objects.get_or_create(
-                    movie=movie,
-                    city=city,
-                    state=state,
-                    country=country,
-                    date=end_date,
-                    defaults={
+                key = f"{movie.id}_{city}_{state}_{country}"
+                
+                if key not in location_movie_data:
+                    location_movie_data[key] = {
+                        'movie': movie,
+                        'city': city,
+                        'state': state,
+                        'country': country,
                         'latitude': order.latitude,
                         'longitude': order.longitude,
-                        'purchase_count': item.quantity
+                        'total_purchases': 0
                     }
-                )
                 
-                if created:
-                    trends_created += 1
-                    print(f'Created trend: {movie.name} in {city}, {state} ({item.quantity} purchases)')
-                else:
+                location_movie_data[key]['total_purchases'] += item.quantity
+        
+        # Create trends from aggregated data
+        for key, data in location_movie_data.items():
+            try:
+                # Try to get existing trend first (any date)
+                try:
+                    trend = MovieLocationTrend.objects.get(
+                        movie=data['movie'],
+                        city=data['city'],
+                        state=data['state'],
+                        country=data['country']
+                    )
+                    # Trend exists
                     if force_regenerate:
-                        trend.purchase_count += item.quantity
-                        trend.latitude = order.latitude
-                        trend.longitude = order.longitude
+                        trend.purchase_count += data['total_purchases']
+                        trend.latitude = data['latitude']
+                        trend.longitude = data['longitude']
                         trend.save()
                         trends_updated += 1
-                        print(f'Updated trend: {movie.name} in {city}, {state} (total: {trend.purchase_count} purchases)')
+                        print(f'Updated trend: {data["movie"].name} in {data["city"]}, {data["state"]} (total: {trend.purchase_count} purchases)')
                     else:
-                        print(f'Skipped existing trend: {movie.name} in {city}, {state}')
+                        print(f'Skipped existing trend: {data["movie"].name} in {data["city"]}, {data["state"]}')
+                except MovieLocationTrend.DoesNotExist:
+                    # Trend doesn't exist, create it
+                    trend = MovieLocationTrend.objects.create(
+                        movie=data['movie'],
+                        city=data['city'],
+                        state=data['state'],
+                        country=data['country'],
+                        date=end_date,
+                        latitude=data['latitude'],
+                        longitude=data['longitude'],
+                        purchase_count=data['total_purchases']
+                    )
+                    trends_created += 1
+                    print(f'Created trend: {data["movie"].name} in {data["city"]}, {data["state"]} ({data["total_purchases"]} purchases)')
+            except Exception as e:
+                print(f'Error creating trend for {data["movie"].name} in {data["city"]}, {data["state"]}: {e}')
+                continue
         
         print(f'Aggregation complete - Created: {trends_created}, Updated: {trends_updated}')
         

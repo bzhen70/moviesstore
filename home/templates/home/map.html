@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+  <div class="container py-5">
+    <div class="text-center mb-4">
+      <h2 class="fw-bold">{{ template_data.title }}</h2>
+      <p class="text-muted">Explore trending movies!</p>
+    </div>
+
+    <!-- Map container -->
+    <div class="position-relative">
+      <div id="map" class="rounded shadow" style="height: 600px;"></div>
+      <div id="loading" class="position-absolute top-50 start-50 translate-middle bg-light p-3 rounded shadow-sm text-center" style="display:none;">
+        <div class="spinner-border text-primary mb-2" role="status"></div>
+        <div>Loading map data...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <script>
+    let map;
+    let userLocation = null;
+    let markers = [];
+    let allData = [];
+    let selectedRegionMarker = null;
+
+    function initMap() {
+      map = L.map('map').setView([20, 0], 2);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+
+      // Try to get user’s location
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((pos) => {
+          userLocation = [pos.coords.latitude, pos.coords.longitude];
+          map.setView(userLocation, 6);
+          L.circleMarker(userLocation, {
+            radius: 8,
+            color: 'blue',
+            fillColor: '#3b82f6',
+            fillOpacity: 0.7
+          })
+            .addTo(map)
+            .bindPopup("You are here");
+          loadMapData();
+        }, () => loadMapData());
+      } else {
+        loadMapData();
+      }
+
+      // Allow clicking on map to select a region
+      map.on('click', (e) => {
+        const { lat, lng } = e.latlng;
+        selectRegion(lat, lng);
+      });
+    }
+
+    function clearMarkers() {
+      markers.forEach((marker) => map.removeLayer(marker));
+      markers = [];
+    }
+
+    function showLoading(show) {
+      document.getElementById('loading').style.display = show ? 'block' : 'none';
+    }
+
+    // Calculate distance between coordinates (in km)
+    function distanceKm(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(lat1 * Math.PI / 180) *
+                Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) ** 2;
+      return 2 * R * Math.asin(Math.sqrt(a));
+    }
+
+    function loadMapData() {
+      showLoading(true);
+      clearMarkers();
+
+      const url = `/api/trending`;
+
+      fetch(url)
+        .then((res) => res.json())
+        .then((data) => {
+          showLoading(false);
+          allData = data.results;
+          if (data.results.length === 0) {
+            alert('No data found.');
+            return;
+          }
+
+          const bounds = [];
+          const nearbyMovies = [];
+
+          data.results.forEach((item) => {
+            const loc = item.location;
+            if (loc.lat && loc.lng) {
+              const dist = userLocation
+                ? distanceKm(userLocation[0], userLocation[1], loc.lat, loc.lng)
+                : null;
+              const isNearby = dist && dist < 100;
+
+              const popup = `
+                <b>${item.movie}</b><br>
+                Purchases: ${item.purchase_count}<br>
+                ${loc.city ? loc.city + ', ' : ''}${loc.country || ''}
+                ${isNearby ? '<br><b style="color:green;">(Near you!)</b>' : ''}
+              `;
+
+              const marker = L.marker([loc.lat, loc.lng], {
+                icon: L.icon({
+                  iconUrl: isNearby
+                    ? 'https://maps.gstatic.com/mapfiles/ms2/micons/green-dot.png'
+                    : 'https://maps.gstatic.com/mapfiles/ms2/micons/red-dot.png',
+                  iconSize: [24, 24]
+                })
+              }).addTo(map).bindPopup(popup);
+
+              markers.push(marker);
+              bounds.push([loc.lat, loc.lng]);
+
+              if (isNearby) nearbyMovies.push(item);
+            }
+          });
+
+          if (bounds.length > 0) map.fitBounds(bounds, { padding: [50, 50] });
+        })
+        .catch((err) => {
+          showLoading(false);
+          console.error('Error loading map data:', err);
+          alert('Error loading map data. Check console for details.');
+        });
+    }
+
+    // Region selection logic (100 km radius)
+    function selectRegion(lat, lng) {
+      const REGION_RADIUS_KM = 100;
+
+      if (selectedRegionMarker) map.removeLayer(selectedRegionMarker);
+      selectedRegionMarker = L.circle([lat, lng], {
+        radius: REGION_RADIUS_KM * 1000, // meters
+        color: 'orange',
+        fillColor: '#ffcc80',
+        fillOpacity: 0.3
+      }).addTo(map);
+
+      const nearby = allData.filter(item => {
+        const loc = item.location;
+        return loc.lat && loc.lng && distanceKm(lat, lng, loc.lat, loc.lng) < REGION_RADIUS_KM;
+      });
+
+      if (nearby.length > 0) {
+        // Sort by purchase count, show top 5
+        const nearbySorted = nearby.sort((a, b) => b.purchase_count - a.purchase_count);
+        const list = nearbySorted
+          .slice(0, 5)
+          .map(m => `<li>${m.movie} (${m.purchase_count} purchases)</li>`)
+          .join('');
+        const popupHtml = `
+          <b>Top trending movies within ${REGION_RADIUS_KM} km:</b><br>
+          <ul>${list}</ul>
+        `;
+        selectedRegionMarker.bindPopup(popupHtml).openPopup();
+      } else {
+        selectedRegionMarker
+          .bindPopup(`No trending movies found within ${REGION_RADIUS_KM} km.`)
+          .openPopup();
+      }
+    }
+
+    // Initial load
+    initMap();
+  </script>
+{% endblock %}

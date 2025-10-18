@@ -19,11 +19,7 @@ def map(request):
     return render(request, 'home/map.html', {'template_data': template_data})
 
 def trending_movies_api(request):
-    genre = request.GET.get('genre', None)
     queryset = MovieLocationTrend.objects.all()
-    if genre:
-        queryset = queryset.filter(movie__genre__iexact=genre)
-    
     data = []
     for trend in queryset:
         data.append({

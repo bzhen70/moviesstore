@@ -1,14 +1,120 @@
-/* star rating styles */
-.star-rating-display, .star-rating-input { display:inline-flex; align-items:center; gap:.5rem; }
-.stars-container, .stars-input-container { display:flex; gap:.25rem; }
-.star-rating-sm i { font-size:.9rem; } .star-rating-md i { font-size:1.1rem; } .star-rating-lg i { font-size:1.5rem; }
-.star-filled, .star-half, .star-btn.active i { color:#ffc107; }
-.star-empty, .star-btn i { color:#e4e5e9; }
-.rating-value { font-weight:600; color:#495057; }
-.rating-count { font-size:.9rem; color:#6c757d; }
-.star-btn { background:none; border:0; padding:.25rem; cursor:pointer; border-radius:.25rem; }
-.star-btn:hover i { color:#ffed4a; transform:scale(1.08); transition:all .15s; }
-@keyframes starPulse { 0%{transform:scale(1)} 50%{transform:scale(1.18)} 100%{transform:scale(1)} }
-.star-selected i { animation:starPulse .28s; color:#ffc107; }
-.rating-actions { display:flex; gap:.5rem; margin-left:.75rem; align-items:center; }
-@media (max-width:576px){ .star-rating-display, .star-rating-input { flex-direction:column; align-items:flex-start; gap:.75rem; } .rating-actions{ margin-left:0; flex-wrap:wrap; } }
+/* ===========================
+   STAR RATING STYLES
+   =========================== */
+
+.star-rating-display,
+.star-rating-input {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stars-container,
+.stars-input-container {
+  display: flex;
+  gap: 0.25rem;
+}
+
+/* Icon sizes */
+.star-rating-sm i { font-size: 0.9rem; }
+.star-rating-md i { font-size: 1.1rem; }
+.star-rating-lg i { font-size: 1.5rem; }
+
+/* ===========================
+   STAR COLORS
+   =========================== */
+
+/* Base color (empty star) */
+.star-rating-input .star-btn i {
+  color: #e4e5e9;
+  transition: color 0.15s, transform 0.15s;
+}
+
+/* Active (filled) star */
+.star-rating-input .star-btn.active i.star-filled {
+  color: #ffc107 !important;
+}
+
+/* Explicit empty star */
+.star-rating-input .star-btn i.star-empty {
+  color: #e4e5e9 !important;
+}
+
+/* Global star color definitions */
+.star-filled,
+.star-half {
+  color: #ffc107 !important;
+}
+
+.star-empty {
+  color: #e4e5e9 !important;
+}
+
+/* ===========================
+   STAR BUTTON EFFECTS
+   =========================== */
+
+.star-btn {
+  color: #ffed4a;
+  background: none;
+  border: 0;
+  display: inline-flex;
+  padding: 0.25rem;
+  cursor: pointer;
+}
+
+.star-btn:hover i {
+  color: #ffed4a;
+  transform: scale(1.08);
+  transition: all 0.15s;
+}
+
+/* Star pulse animation */
+@keyframes starPulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+.star-selected i {
+  animation: starPulse 0.28s;
+  color: #ffc107;
+}
+
+/* ===========================
+   RATING DETAILS
+   =========================== */
+
+.rating-value {
+  font-weight: 600;
+  color: #495057;
+}
+
+.rating-count {
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.rating-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* ===========================
+   RESPONSIVE LAYOUT
+   =========================== */
+
+@media (max-width: 576px) {
+  .star-rating-display,
+  .star-rating-input {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .rating-actions {
+    margin-left: 0;
+    flex-wrap: wrap;
+  }
+}

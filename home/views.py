@@ -28,6 +28,8 @@ def trending_movies_api(request):
     for trend in queryset:
         data.append({
             'movie': trend.movie.name,
+            'movie_id': trend.movie.id,
+            'movie_rating' : "No ratings" if trend.movie.get_average_rating() is 0 else (str(trend.movie.get_average_rating()) + "/5"),
             'purchase_count': trend.purchase_count,
             'location': {
                 'city': getattr(trend, 'city', ''),

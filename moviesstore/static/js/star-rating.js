@@ -1,11 +1,14 @@
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.star-rating-input').forEach(setupRating);
+
 
   function highlight(stars, count) {
     stars.forEach((btn, i) => {
+      console.log("highlight called with count =", count);
       const icon = btn.querySelector('i');
-      icon.classList.toggle('fas', i < count);
-      icon.classList.toggle('far', i >= count);
+      const isActive = i < count;
+      btn.className = 'star-btn' + (isActive ? ' active' : '');
+      icon.className = isActive ? 'fas fa-star star-filled' : 'far fa-star star-empty';
     });
   }
 
@@ -22,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
       btn.addEventListener('mouseleave', () => highlight(stars, parseInt(hidden.value || '0', 10)));
       btn.addEventListener('click', (e) => {
         e.preventDefault();
-        const rating = parseInt(btn.dataset.rating, 10);
+        const rating = parseInt(btn.dataset.rating, 10) || 0;
         hidden.value = rating;
         highlight(stars, rating);
         if (submitBtn) submitBtn.classList.remove('d-none');

@@ -163,7 +163,7 @@
         const nearbySorted = nearby.sort((a, b) => b.purchase_count - a.purchase_count);
         const list = nearbySorted
           .slice(0, 5)
-          .map(m => `<li>${m.movie} (${m.purchase_count} purchases)</li>`)
+          .map(m => `<li><a href='/movies/${m.movie_id}/'>${m.movie}</a> (Purchases: ${m.purchase_count}, Rating: ${m.movie_rating})</li>`)
           .join('');
         const popupHtml = `
           <b>Top trending movies within ${REGION_RADIUS_KM} km:</b><br>

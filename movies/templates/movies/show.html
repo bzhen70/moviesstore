@@ -19,6 +19,7 @@
           {% include 'components/star_rating_input.html' with movie_id=template_data.movie.id current_rating=template_data.user_rating %}
         </div>
         {% endif %}
+        <script src="{% static 'js/star-rating.js' %}"></script>
         <p class="card-text">
           <form method="post" action="{% url 'cart.add' id=template_data.movie.id %}">
             <div class="row">
